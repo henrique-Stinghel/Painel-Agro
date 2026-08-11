@@ -11,6 +11,14 @@ function money(value) {
   }).format(value);
 }
 
+function numberBr(value) {
+  if (value == null) return '--';
+
+  return new Intl.NumberFormat('pt-BR', {
+    maximumFractionDigits: 1,
+  }).format(value);
+}
+
 function weatherEmoji(code) {
   if (code == null) return '🌤️';
   if ([0, 1].includes(code)) return '☀️';
@@ -20,79 +28,6 @@ function weatherEmoji(code) {
   if (code >= 80 && code <= 82) return '🌦️';
   if (code >= 95) return '⛈️';
   return '🌤️';
-}
-
-function getCityName(city) {
-  return (
-    city.name ||
-    city.city ||
-    city.nome ||
-    city.location ||
-    'Cidade'
-  );
-}
-
-function getTemperature(city) {
-  return (
-    city.temperature ??
-    city.temp ??
-    city.currentTemperature ??
-    city.current_temperature ??
-    city.temperature_2m ??
-    '--'
-  );
-}
-
-function getHumidity(city) {
-  return (
-    city.humidity ??
-    city.umidade ??
-    city.relativeHumidity ??
-    city.relative_humidity_2m ??
-    null
-  );
-}
-
-function getMinTemp(city) {
-  return (
-    city.min ??
-    city.minTemp ??
-    city.minTemperature ??
-    city.temperatureMin ??
-    city.temperature_2m_min ??
-    null
-  );
-}
-
-function getMaxTemp(city) {
-  return (
-    city.max ??
-    city.maxTemp ??
-    city.maxTemperature ??
-    city.temperatureMax ??
-    city.temperature_2m_max ??
-    null
-  );
-}
-
-function getRain(city) {
-  return (
-    city.rain ??
-    city.precipitation ??
-    city.precipitacao ??
-    city.precipitation_sum ??
-    null
-  );
-}
-
-function getWeatherCode(city) {
-  return (
-    city.weatherCode ??
-    city.weather_code ??
-    city.code ??
-    city.weathercode ??
-    null
-  );
 }
 
 export default function Home() {
@@ -141,10 +76,14 @@ export default function Home() {
 
     const weatherItems = (weather.cities || [])
       .map((city) => {
-        const name = getCityName(city);
-        const temp = getTemperature(city);
+        const temp = city.current?.temperature;
 
-        return name + ': ' + temp + '°C';
+        return (
+          city.city +
+          ': ' +
+          (temp == null ? '--' : numberBr(temp)) +
+          '°C'
+        );
       })
       .join(' • ');
 
@@ -226,51 +165,49 @@ export default function Home() {
         <div className="sectionTitle">
           <div>
             <h2>🌤️ Clima no Espírito Santo</h2>
-            <p>Atualização automática das cidades selecionadas.</p>
+            <p>
+              Temperatura atual e previsão diária das cidades selecionadas.
+            </p>
           </div>
         </div>
 
         <div className="weatherGrid">
-          {(weather.cities || []).map((city, index) => {
-            const cityName = getCityName(city);
-            const temperature = getTemperature(city);
-            const humidity = getHumidity(city);
-            const minTemp = getMinTemp(city);
-            const maxTemp = getMaxTemp(city);
-            const rain = getRain(city);
-            const weatherCode = getWeatherCode(city);
+          {(weather.cities || []).map((city) => {
+            const current = city.current || {};
+            const today = city.today || {};
 
             return (
-              <article
-                className="weatherCard"
-                key={cityName + '-' + index}
-              >
+              <article className="weatherCard" key={city.city}>
                 <div className="weatherCardTop">
-                  <strong>{cityName}</strong>
-                  <span>{weatherEmoji(weatherCode)}</span>
+                  <strong>{city.city}</strong>
+                  <span>{weatherEmoji(current.weatherCode)}</span>
                 </div>
 
                 <h3>
-                  {temperature === '--'
+                  {current.temperature == null
                     ? '--'
-                    : temperature + '°C'}
+                    : numberBr(current.temperature) + '°C'}
                 </h3>
 
-                {minTemp != null && maxTemp != null ? (
-                  <small>
-                    Hoje: {minTemp}° / {maxTemp}°
-                  </small>
-                ) : humidity != null ? (
-                  <small>
-                    Umidade: {humidity}%
-                  </small>
-                ) : (
-                  <small>Dados meteorológicos</small>
-                )}
+                <small>
+                  Mín. {numberBr(today.min)}° • Máx. {numberBr(today.max)}°
+                </small>
 
-                {rain != null && (
+                <small>
+                  💧 Umidade {current.humidity ?? '--'}%
+                </small>
+
+                <small>
+                  🌧️ Chuva {today.rainProbability ?? '--'}%
+                </small>
+
+                <small>
+                  💨 Vento {numberBr(current.wind)} km/h
+                </small>
+
+                {today.rainMm != null && (
                   <small>
-                    Chuva: {rain} mm
+                    Acumulado previsto: {numberBr(today.rainMm)} mm
                   </small>
                 )}
               </article>
