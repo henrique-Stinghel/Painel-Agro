@@ -33,9 +33,9 @@ export default function Home() {
       fetch('/api/weather').then((r) => r.json()),
       fetch('/api/market').then((r) => r.json()),
     ])
-      .then(([weatherData, marketData]) => {
-        setWeather(weatherData);
-        setMarket(marketData);
+      .then(([w, m]) => {
+        setWeather(w || { cities: [] });
+        setMarket(m || { items: [] });
       })
       .catch((error) => {
         console.error('Erro ao carregar dados:', error);
@@ -52,6 +52,9 @@ export default function Home() {
       setRadar(data);
     } catch (error) {
       console.error('Erro no radar:', error);
+      setRadar({
+        message: 'Não foi possível carregar o radar agora.',
+      });
     } finally {
       setLoadingRadar(false);
     }
@@ -59,13 +62,16 @@ export default function Home() {
 
   const ticker = useMemo(() => {
     const marketItems = (market.items || [])
-.map((item) => ${item.label}: ${money(item.value)})
+      .map((item) => item.label + ': ' + money(item.value))
       .join(' • ');
 
     const weatherItems = (weather.cities || [])
       .map(
         (city) =>
-          ${city.name}: ${city.temperature ?? '--'}°C
+          city.name +
+          ': ' +
+          (city.temperature ?? '--') +
+          '°C'
       )
       .join(' • ');
 
@@ -74,9 +80,11 @@ export default function Home() {
       .join(' • ');
   }, [market, weather]);
 
+  const whatsappUrl =
+    'https://wa.me/5527996311605?text=Ola%21%20Vi%20o%20anuncio%20da%20Tesla%20Sistemas%20de%20Irrigacao%20no%20Painel%20Agro%20ES%20e%20gostaria%20de%20mais%20informacoes.';
+
   return (
     <main>
-
       <header>
         <div>
           <small>MERCADO • CLIMA • INTELIGÊNCIA</small>
@@ -88,205 +96,125 @@ export default function Home() {
           </p>
         </div>
 
-        <span className="live">
-          ● ONLINE
-        </span>
+        <span className="live">● ONLINE</span>
       </header>
 
       <section className="ad adTop teslaAd">
-
         <div className="teslaAdContent">
+          <strong>TESLA SISTEMAS DE IRRIGAÇÃO</strong>
 
-          <strong>
-            TESLA SISTEMAS DE IRRIGAÇÃO
-          </strong>
-
-          <span>
-            A base do seu plantio começa aqui!
-          </span>
+          <span>A base do seu plantio começa aqui!</span>
 
           <small>
-            Soluções em irrigação para levar eficiência e produtividade ao campo.
+            Soluções em irrigação para levar eficiência e produtividade
+            ao campo.
           </small>
-
         </div>
 
         <a
-          href="https://wa.me/5527996311605?text=Ol%C3%A1%2C%20vim%20pelo%20Painel%20Agro%20ES%20e%20gostaria%20de%20saber%20mais%20sobre%20os%20sistemas%20de%20irriga%C3%A7%C3%A3o."
+          href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
         >
           Falar no WhatsApp
         </a>
-
       </section>
 
       {market.source && (
-
         <div className="marketSource">
-
-          <strong>
-            Mercado físico ES
-          </strong>
+          <strong>Mercado físico ES</strong>
 
           <span>
             {market.source}
             {market.quoteDate
-              ? ` • cotação ${market.quoteDate}`
+              ? ' • cotação ' + market.quoteDate
               : ''}
           </span>
-
         </div>
-
       )}
 
       <section className="prices">
-
         {(market.items || []).map((item) => (
-
-          <article
-            className="priceCard"
-            key={item.id}
-          >
-
+          <article className="priceCard" key={item.id}>
             <span>
-              {item.id === 'boi' ? '🐂' : '☕'}{' '}
-              {item.label}
+              {item.id === 'boi' ? '🐂' : '☕'} {item.label}
             </span>
 
-            <strong>
-              {money(item.value)}
-            </strong>
+            <strong>{money(item.value)}</strong>
 
             <small>
               {item.unit} • {item.source}
               {item.changePct == null
                 ? ''
-                : ` • ${item.changePct}%`}
+                : ' • ' + item.changePct + '%'}
             </small>
-
           </article>
-
         ))}
-
       </section>
 
       <div className="ticker">
-
-        <div>
-          {ticker || 'Carregando dados...'}
-        </div>
-
+        <div>{ticker || 'Carregando dados...'}</div>
       </div>
 
-      <section>
-
+      <section className="weatherSection">
         <div className="sectionTitle">
-
           <div>
-
-            <h2>
-              🌦️ Clima no Espírito Santo
-            </h2>
-
-            <p>
-              Atualização automática das cidades selecionadas.
-            </p>
-
+            <h2>🌤️ Clima no Espírito Santo</h2>
+            <p>Atualização automática das cidades selecionadas.</p>
           </div>
-
         </div>
 
         <div className="weatherGrid">
-
           {(weather.cities || []).map((city) => (
-
-            <article
-              className="weatherCard"
-              key={city.name}
-            >
-
-              <div>
-
-                <strong>
-                  {city.name}
-                </strong>
-
-                <span>
-                  {weatherEmoji(city.weatherCode)}
-                </span>
-
+            <article className="weatherCard" key={city.name}>
+              <div className="weatherCardTop">
+                <strong>{city.name}</strong>
+                <span>{weatherEmoji(city.weatherCode)}</span>
               </div>
 
               <h3>
-                {city.temperature ?? '--'}°C
+                {city.temperature == null
+                  ? '--'
+                  : city.temperature + '°C'}
               </h3>
 
               <small>
-                Umidade: {city.humidity ?? '--'}%
+                {city.description || 'Dados meteorológicos'}
               </small>
-
             </article>
-
           ))}
-
         </div>
-
       </section>
 
       <section className="radarSection">
-
-        <div className="sectionTitle">
-
-          <div>
-
-            <h2>
-              📡 Radar Agro
-            </h2>
-
-            <p>
-              Informações para apoiar decisões no campo.
-            </p>
-
-          </div>
-
-          <button
-            onClick={runRadar}
-            disabled={loadingRadar}
-          >
-            {loadingRadar
-              ? 'Analisando...'
-              : 'Atualizar radar'}
-          </button>
-
+        <div>
+          <h2>📡 Radar Agro ES</h2>
+          <p>
+            Consulte informações e sinais úteis para acompanhar o campo.
+          </p>
         </div>
 
+        <button
+          type="button"
+          onClick={runRadar}
+          disabled={loadingRadar}
+        >
+          {loadingRadar ? 'Consultando...' : 'Rodar Radar'}
+        </button>
+
         {radar && (
-
           <div className="radarResult">
+            <strong>Resultado do radar</strong>
 
-            <pre>
-              {JSON.stringify(radar, null, 2)}
-            </pre>
-
+            <pre>{JSON.stringify(radar, null, 2)}</pre>
           </div>
-
         )}
-
       </section>
 
       <footer>
-
-        <strong>
-          Painel Agro ES
-        </strong>
-
-        <span>
-          Mercado • Clima • Inteligência
-        </span>
-
+        <span>Painel Agro ES</span>
+        <span>Mercado • Clima • Inteligência</span>
       </footer>
-
     </main>
   );
 }
