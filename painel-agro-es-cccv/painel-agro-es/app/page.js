@@ -59,7 +59,7 @@ export default function Home() {
 
   const ticker = useMemo(() => {
     const marketItems = (market.items || [])
-      .map((item) => ${item.label}: ${money(item.value)})
+.map((item) => ${item.label}: ${money(item.value)})
       .join(' • ');
 
     const weatherItems = (weather.cities || [])
