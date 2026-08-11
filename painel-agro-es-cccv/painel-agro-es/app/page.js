@@ -22,6 +22,79 @@ function weatherEmoji(code) {
   return '🌤️';
 }
 
+function getCityName(city) {
+  return (
+    city.name ||
+    city.city ||
+    city.nome ||
+    city.location ||
+    'Cidade'
+  );
+}
+
+function getTemperature(city) {
+  return (
+    city.temperature ??
+    city.temp ??
+    city.currentTemperature ??
+    city.current_temperature ??
+    city.temperature_2m ??
+    '--'
+  );
+}
+
+function getHumidity(city) {
+  return (
+    city.humidity ??
+    city.umidade ??
+    city.relativeHumidity ??
+    city.relative_humidity_2m ??
+    null
+  );
+}
+
+function getMinTemp(city) {
+  return (
+    city.min ??
+    city.minTemp ??
+    city.minTemperature ??
+    city.temperatureMin ??
+    city.temperature_2m_min ??
+    null
+  );
+}
+
+function getMaxTemp(city) {
+  return (
+    city.max ??
+    city.maxTemp ??
+    city.maxTemperature ??
+    city.temperatureMax ??
+    city.temperature_2m_max ??
+    null
+  );
+}
+
+function getRain(city) {
+  return (
+    city.rain ??
+    city.precipitation ??
+    city.precipitacao ??
+    city.precipitation_sum ??
+    null
+  );
+}
+
+function getWeatherCode(city) {
+  return (
+    city.weatherCode ??
+    city.weather_code ??
+    city.code ??
+    city.weathercode ??
+    null
+  );
+}
+
 export default function Home() {
   const [weather, setWeather] = useState({ cities: [] });
   const [market, setMarket] = useState({ items: [] });
@@ -33,9 +106,9 @@ export default function Home() {
       fetch('/api/weather').then((r) => r.json()),
       fetch('/api/market').then((r) => r.json()),
     ])
-      .then(([w, m]) => {
-        setWeather(w || { cities: [] });
-        setMarket(m || { items: [] });
+      .then(([weatherData, marketData]) => {
+        setWeather(weatherData || { cities: [] });
+        setMarket(marketData || { items: [] });
       })
       .catch((error) => {
         console.error('Erro ao carregar dados:', error);
@@ -67,13 +140,12 @@ export default function Home() {
       .join(' • ');
 
     const weatherItems = (weather.cities || [])
-      .map(
-        (city) =>
-          city.name +
-          ': ' +
-          (city.temperature ?? '--') +
-          '°C'
-      )
+      .map((city) => {
+        const name = getCityName(city);
+        const temp = getTemperature(city);
+
+        return name + ': ' + temp + '°C';
+      })
       .join(' • ');
 
     return [marketItems, weatherItems]
@@ -159,30 +231,58 @@ export default function Home() {
         </div>
 
         <div className="weatherGrid">
-          {(weather.cities || []).map((city) => (
-            <article className="weatherCard" key={city.name}>
-              <div className="weatherCardTop">
-                <strong>{city.name}</strong>
-                <span>{weatherEmoji(city.weatherCode)}</span>
-              </div>
+          {(weather.cities || []).map((city, index) => {
+            const cityName = getCityName(city);
+            const temperature = getTemperature(city);
+            const humidity = getHumidity(city);
+            const minTemp = getMinTemp(city);
+            const maxTemp = getMaxTemp(city);
+            const rain = getRain(city);
+            const weatherCode = getWeatherCode(city);
 
-              <h3>
-                {city.temperature == null
-                  ? '--'
-                  : city.temperature + '°C'}
-              </h3>
+            return (
+              <article
+                className="weatherCard"
+                key={cityName + '-' + index}
+              >
+                <div className="weatherCardTop">
+                  <strong>{cityName}</strong>
+                  <span>{weatherEmoji(weatherCode)}</span>
+                </div>
 
-              <small>
-                {city.description || 'Dados meteorológicos'}
-              </small>
-            </article>
-          ))}
+                <h3>
+                  {temperature === '--'
+                    ? '--'
+                    : temperature + '°C'}
+                </h3>
+
+                {minTemp != null && maxTemp != null ? (
+                  <small>
+                    Hoje: {minTemp}° / {maxTemp}°
+                  </small>
+                ) : humidity != null ? (
+                  <small>
+                    Umidade: {humidity}%
+                  </small>
+                ) : (
+                  <small>Dados meteorológicos</small>
+                )}
+
+                {rain != null && (
+                  <small>
+                    Chuva: {rain} mm
+                  </small>
+                )}
+              </article>
+            );
+          })}
         </div>
       </section>
 
       <section className="radarSection">
         <div>
           <h2>📡 Radar Agro ES</h2>
+
           <p>
             Consulte informações e sinais úteis para acompanhar o campo.
           </p>
