@@ -1,7 +1,7 @@
 const CCCV_URL = 'https://www.cccv.org.br/cotacao/';
 
 function decodeHtml(text) {
-  return text
+  return String(text || '')
     .replace(/&nbsp;|&#160;/gi, ' ')
     .replace(/&quot;|&#34;/gi, '"')
     .replace(/&amp;/gi, '&')
@@ -13,17 +13,13 @@ function decodeHtml(text) {
     .replace(/&Atilde;|&#195;/gi, 'Ã')
     .replace(/&eacute;|&#233;/gi, 'é')
     .replace(/&Eacute;|&#201;/gi, 'É')
-    .replace(/&iacute;|&#237;/gi, 'í')
-    .replace(/&Iacute;|&#205;/gi, 'Í')
     .replace(/&oacute;|&#243;/gi, 'ó')
-    .replace(/&Oacute;|&#211;/gi, 'Ó')
-    .replace(/&uacute;|&#250;/gi, 'ú')
-    .replace(/&Uacute;|&#218;/gi, 'Ú');
+    .replace(/&Oacute;|&#211;/gi, 'Ó');
 }
 
 function htmlToText(html) {
   return decodeHtml(
-    html
+    String(html || '')
       .replace(/<script[\s\S]*?<\/script>/gi, ' ')
       .replace(/<style[\s\S]*?<\/style>/gi, ' ')
       .replace(/<[^>]+>/g, ' ')
@@ -32,76 +28,86 @@ function htmlToText(html) {
     .trim();
 }
 
-function brlToNumber(value) {
+function brToNumber(value) {
   if (!value) return null;
 
-  const parsed = Number(
-    value
-      .replace(/\./g, '')
-      .replace(',', '.')
-      .replace(/[^\d.-]/g, '')
-  );
+  const cleaned = String(value)
+    .replace(/\s/g, '')
+    .replace(/\./g, '')
+    .replace(',', '.')
+    .replace(/[^\d.-]/g, '');
+
+  const parsed = Number(cleaned);
 
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+function firstPrice(text, pattern) {
+  const match = text.match(pattern);
+
+  if (!match || !match[1]) {
+    return null;
+  }
+
+  return brToNumber(match[1]);
 }
 
 async function fetchCCCV() {
   const response = await fetch(CCCV_URL, {
     headers: {
       'User-Agent':
-        'PainelAgroES/1.0 (+market-data; source attribution CCCV)',
+        'Mozilla/5.0 (compatible; PainelAgroES/1.0; market-data)'
     },
     next: {
-      revalidate: 900,
-    },
+      revalidate: 900
+    }
   });
 
   if (!response.ok) {
-    throw new Error(CCCV respondeu ${response.status});
+    throw new Error('CCCV respondeu ' + response.status);
   }
 
   const html = await response.text();
+  const text = htmlToText(html);
 
-  const rows = [...html.matchAll(/<tr[^>]>[\s\S]?<\/tr>/gi)];
+  const quoteDateMatch = text.match(
+    /Arábica\s+(\d{1,2}\s+[A-ZÇ]{3}\s+\d{4})/i
+  );
 
-  let latest = null;
+  const quoteDate = quoteDateMatch
+    ? quoteDateMatch[1]
+    : null;
 
-  for (const rowMatch of rows) {
-    const rowText = htmlToText(rowMatch[0]);
+  const arabicaDura = firstPrice(
+    text,
+    /Bebida\s*["']?Dura["']?[\s\S]{0,350}?R\$\s*([\d.]+,\d{2})/i
+  );
 
-    const match = rowText.match(
-      /^(\d{1,2})\s+([\d.]+,\d{2})\s+([\d.]+,\d{2})\s+([\d.]+,\d{2})$/
-    );
+  const arabicaRio = firstPrice(
+    text,
+    /Bebida\s*["']?Rio["']?[\s\S]{0,350}?R\$\s*([\d.]+,\d{2})/i
+  );
 
-    if (!match) continue;
+  const conilon = firstPrice(
+    text,
+    /Conilon[\s\S]{0,600}?Bica\s*corrida[\s\S]{0,400}?R\$\s*([\d.]+,\d{2})/i
+  );
 
-    const candidate = {
-      day: Number(match[1]),
-      arabicaDura: brlToNumber(match[2]),
-      arabicaRio: brlToNumber(match[3]),
-      conilon: brlToNumber(match[4]),
-    };
-
-    if (
-      candidate.arabicaDura !== null ||
-      candidate.arabicaRio !== null ||
-      candidate.conilon !== null
-    ) {
-      latest = candidate;
-    }
-  }
-
-  if (!latest) {
+  if (
+    arabicaDura === null &&
+    arabicaRio === null &&
+    conilon === null
+  ) {
     throw new Error(
-      'Não foi possível localizar a última cotação no HTML da CCCV'
+      'Não foi possível localizar as cotações no HTML da CCCV'
     );
   }
 
   return {
-    quoteDate: Dia ${latest.day},
-    arabicaDura: latest.arabicaDura,
-    arabicaRio: latest.arabicaRio,
-    conilon: latest.conilon,
+    quoteDate,
+    arabicaDura,
+    arabicaRio,
+    conilon
   };
 }
 
@@ -110,7 +116,7 @@ export async function getMarketSnapshot() {
     const cccv = await fetchCCCV();
 
     return {
-      source: 'CCCV — Centro do Comércio de Café de Vitória',
+      source: 'CCCV - Centro do Comércio de Café de Vitória',
       sourceUrl: CCCV_URL,
       quoteDate: cccv.quoteDate,
       updatedAt: new Date().toISOString(),
@@ -122,7 +128,7 @@ export async function getMarketSnapshot() {
           unit: 'saca 60 kg',
           value: cccv.arabicaDura,
           changePct: null,
-          source: 'CCCV',
+          source: 'CCCV'
         },
         {
           id: 'arabica-rio',
@@ -130,7 +136,7 @@ export async function getMarketSnapshot() {
           unit: 'saca 60 kg',
           value: cccv.arabicaRio,
           changePct: null,
-          source: 'CCCV',
+          source: 'CCCV'
         },
         {
           id: 'conilon',
@@ -138,7 +144,7 @@ export async function getMarketSnapshot() {
           unit: 'saca 60 kg',
           value: cccv.conilon,
           changePct: null,
-          source: 'CCCV',
+          source: 'CCCV'
         },
         {
           id: 'boi',
@@ -146,16 +152,17 @@ export async function getMarketSnapshot() {
           unit: 'arroba',
           value: null,
           changePct: null,
-          source: 'A definir',
-        },
-      ],
+          source: 'A definir'
+        }
+      ]
     };
   } catch (error) {
     return {
-      source: 'CCCV — indisponível no momento',
+      source: 'CCCV - indisponível no momento',
       sourceUrl: CCCV_URL,
       quoteDate: null,
       updatedAt: new Date().toISOString(),
+
       error:
         error instanceof Error
           ? error.message
@@ -168,7 +175,7 @@ export async function getMarketSnapshot() {
           unit: 'saca 60 kg',
           value: null,
           changePct: null,
-          source: 'CCCV',
+          source: 'CCCV'
         },
         {
           id: 'arabica-rio',
@@ -176,7 +183,7 @@ export async function getMarketSnapshot() {
           unit: 'saca 60 kg',
           value: null,
           changePct: null,
-          source: 'CCCV',
+          source: 'CCCV'
         },
         {
           id: 'conilon',
@@ -184,7 +191,7 @@ export async function getMarketSnapshot() {
           unit: 'saca 60 kg',
           value: null,
           changePct: null,
-          source: 'CCCV',
+          source: 'CCCV'
         },
         {
           id: 'boi',
@@ -192,9 +199,9 @@ export async function getMarketSnapshot() {
           unit: 'arroba',
           value: null,
           changePct: null,
-          source: 'A definir',
-        },
-      ],
+          source: 'A definir'
+        }
+      ]
     };
   }
 }
