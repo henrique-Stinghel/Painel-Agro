@@ -32,7 +32,6 @@ function brToNumber(value) {
   if (!value) return null;
 
   const cleaned = String(value)
-    .replace(/\s/g, '')
     .replace(/\./g, '')
     .replace(',', '.')
     .replace(/[^\d.-]/g, '');
@@ -40,16 +39,6 @@ function brToNumber(value) {
   const parsed = Number(cleaned);
 
   return Number.isFinite(parsed) ? parsed : null;
-}
-
-function firstPrice(text, pattern) {
-  const match = text.match(pattern);
-
-  if (!match || !match[1]) {
-    return null;
-  }
-
-  return brToNumber(match[1]);
 }
 
 async function fetchCCCV() {
@@ -68,46 +57,41 @@ async function fetchCCCV() {
   }
 
   const html = await response.text();
-  const text = htmlToText(html);
 
-  const quoteDateMatch = text.match(
-    /Arábica\s+(\d{1,2}\s+[A-ZÇ]{3}\s+\d{4})/i
-  );
+  const rows = [...html.matchAll(/<tr[^>]>[\s\S]?<\/tr>/gi)];
 
-  const quoteDate = quoteDateMatch
-    ? quoteDateMatch[1]
-    : null;
+  let latest = null;
 
-  const arabicaDura = firstPrice(
-    text,
-    /Bebida\s*["']?Dura["']?[\s\S]{0,350}?R\$\s*([\d.]+,\d{2})/i
-  );
+  for (const row of rows) {
+    const rowText = htmlToText(row[0]);
 
-  const arabicaRio = firstPrice(
-    text,
-    /Bebida\s*["']?Rio["']?[\s\S]{0,350}?R\$\s*([\d.]+,\d{2})/i
-  );
+    const match = rowText.match(
+      /^(\d{1,2})\s+([\d.]+,\d{2})\s+([\d.]+,\d{2})\s+([\d.]+,\d{2})$/
+    );
 
-  const conilon = firstPrice(
-    text,
-    /Conilon[\s\S]{0,600}?Bica\s*corrida[\s\S]{0,400}?R\$\s*([\d.]+,\d{2})/i
-  );
+    if (!match) {
+      continue;
+    }
 
-  if (
-    arabicaDura === null &&
-    arabicaRio === null &&
-    conilon === null
-  ) {
+    latest = {
+      day: Number(match[1]),
+      arabicaDura: brToNumber(match[2]),
+      arabicaRio: brToNumber(match[3]),
+      conilon: brToNumber(match[4])
+    };
+  }
+
+  if (!latest) {
     throw new Error(
-      'Não foi possível localizar as cotações no HTML da CCCV'
+      'Não foi possível localizar as linhas de cotação da CCCV'
     );
   }
 
   return {
-    quoteDate,
-    arabicaDura,
-    arabicaRio,
-    conilon
+    quoteDate: 'Dia ' + latest.day,
+    arabicaDura: latest.arabicaDura,
+    arabicaRio: latest.arabicaRio,
+    conilon: latest.conilon
   };
 }
 
