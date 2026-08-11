@@ -14,7 +14,10 @@ function decodeHtml(text) {
     .replace(/&eacute;|&#233;/gi, 'é')
     .replace(/&Eacute;|&#201;/gi, 'É')
     .replace(/&oacute;|&#243;/gi, 'ó')
-    .replace(/&Oacute;|&#211;/gi, 'Ó');
+    .replace(/&Oacute;|&#211;/gi, 'Ó')
+    .replace(/&#(\d+);/g, function (_, code) {
+      return String.fromCharCode(Number(code));
+    });
 }
 
 function htmlToText(html) {
@@ -22,6 +25,10 @@ function htmlToText(html) {
     String(html || '')
       .replace(/<script[\s\S]*?<\/script>/gi, ' ')
       .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+      .replace(/<br\s*\/?>/gi, ' ')
+      .replace(/<\/td>/gi, ' ')
+      .replace(/<\/th>/gi, ' ')
+      .replace(/<\/tr>/gi, ' ')
       .replace(/<[^>]+>/g, ' ')
   )
     .replace(/\s+/g, ' ')
@@ -31,12 +38,12 @@ function htmlToText(html) {
 function brToNumber(value) {
   if (!value) return null;
 
-  const cleaned = String(value)
-    .replace(/\./g, '')
-    .replace(',', '.')
-    .replace(/[^\d.-]/g, '');
-
-  const parsed = Number(cleaned);
+  const parsed = Number(
+    String(value)
+      .replace(/\./g, '')
+      .replace(',', '.')
+      .replace(/[^\d.-]/g, '')
+  );
 
   return Number.isFinite(parsed) ? parsed : null;
 }
@@ -44,12 +51,10 @@ function brToNumber(value) {
 async function fetchCCCV() {
   const response = await fetch(CCCV_URL, {
     headers: {
-      'User-Agent':
-        'Mozilla/5.0 (compatible; PainelAgroES/1.0; market-data)'
+      'User-Agent': 'Mozilla/5.0 PainelAgroES/1.0',
+      Accept: 'text/html,application/xhtml+xml'
     },
-    next: {
-      revalidate: 900
-    }
+    cache: 'no-store'
   });
 
   if (!response.ok) {
@@ -57,24 +62,23 @@ async function fetchCCCV() {
   }
 
   const html = await response.text();
+  const text = htmlToText(html);
 
-  const rows = [...html.matchAll(/<tr[^>]>[\s\S]?<\/tr>/gi)];
+  const regex =
+    /(?:^|\s)(\d{1,2})\s+([\d.]+,\d{2})\s+([\d.]+,\d{2})\s+([\d.]+,\d{2})(?=\s|$)/g;
 
+  let match;
   let latest = null;
 
-  for (const row of rows) {
-    const rowText = htmlToText(row[0]);
+  while ((match = regex.exec(text)) !== null) {
+    const day = Number(match[1]);
 
-    const match = rowText.match(
-      /^(\d{1,2})\s+([\d.]+,\d{2})\s+([\d.]+,\d{2})\s+([\d.]+,\d{2})$/
-    );
-
-    if (!match) {
+    if (day < 1 || day > 31) {
       continue;
     }
 
     latest = {
-      day: Number(match[1]),
+      day: day,
       arabicaDura: brToNumber(match[2]),
       arabicaRio: brToNumber(match[3]),
       conilon: brToNumber(match[4])
@@ -83,7 +87,7 @@ async function fetchCCCV() {
 
   if (!latest) {
     throw new Error(
-      'Não foi possível localizar as linhas de cotação da CCCV'
+      'Não foi possível localizar os preços no conteúdo recebido da CCCV'
     );
   }
 
