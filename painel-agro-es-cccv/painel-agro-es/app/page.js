@@ -52,6 +52,7 @@ export default function Home() {
       setRadar(data);
     } catch (error) {
       console.error('Erro no radar:', error);
+
       setRadar({
         message: 'Não foi possível carregar o radar agora.',
       });
@@ -99,24 +100,17 @@ export default function Home() {
         <span className="live">● ONLINE</span>
       </header>
 
-      <section className="ad adTop teslaAd">
-        <div className="teslaAdContent">
-          <strong>TESLA SISTEMAS DE IRRIGAÇÃO</strong>
-
-          <span>A base do seu plantio começa aqui!</span>
-
-          <small>
-            Soluções em irrigação para levar eficiência e produtividade
-            ao campo.
-          </small>
-        </div>
-
+      <section className="teslaBanner">
         <a
           href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
+          aria-label="Falar com a Tesla Sistemas de Irrigação pelo WhatsApp"
         >
-          Falar no WhatsApp
+          <img
+            src="/WhatsApp Image 2026-08-10 at 22.32.53.jpeg"
+            alt="Tesla Sistemas de Irrigação - A base do seu plantio começa aqui"
+          />
         </a>
       </section>
 
