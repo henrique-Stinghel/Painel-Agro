@@ -33,9 +33,9 @@ export default function Home() {
       fetch('/api/weather').then((r) => r.json()),
       fetch('/api/market').then((r) => r.json()),
     ])
-      .then(([w, m]) => {
-        setWeather(w);
-        setMarket(m);
+      .then(([weatherData, marketData]) => {
+        setWeather(weatherData);
+        setMarket(marketData);
       })
       .catch((error) => {
         console.error('Erro ao carregar dados:', error);
@@ -63,34 +63,52 @@ export default function Home() {
       .join(' • ');
 
     const weatherItems = (weather.cities || [])
-      .map((city) => ${city.name}: ${city.temperature ?? '--'}°C)
+      .map(
+        (city) =>
+          ${city.name}: ${city.temperature ?? '--'}°C
+      )
       .join(' • ');
 
-    return [marketItems, weatherItems].filter(Boolean).join(' • ');
+    return [marketItems, weatherItems]
+      .filter(Boolean)
+      .join(' • ');
   }, [market, weather]);
 
   return (
     <main>
+
       <header>
         <div>
           <small>MERCADO • CLIMA • INTELIGÊNCIA</small>
+
           <h1>Painel Agro ES</h1>
+
           <p>
             Informação prática para quem produz e negocia no Espírito Santo.
           </p>
         </div>
 
-        <span className="live">● ONLINE</span>
+        <span className="live">
+          ● ONLINE
+        </span>
       </header>
 
       <section className="ad adTop teslaAd">
+
         <div className="teslaAdContent">
-          <strong>TESLA SISTEMAS DE IRRIGAÇÃO</strong>
-          <span>A base do seu plantio começa aqui!</span>
+
+          <strong>
+            TESLA SISTEMAS DE IRRIGAÇÃO
+          </strong>
+
+          <span>
+            A base do seu plantio começa aqui!
+          </span>
+
           <small>
-            Soluções em irrigação para levar eficiência e produtividade
-            ao campo.
+            Soluções em irrigação para levar eficiência e produtividade ao campo.
           </small>
+
         </div>
 
         <a
@@ -100,89 +118,175 @@ export default function Home() {
         >
           Falar no WhatsApp
         </a>
+
       </section>
 
       {market.source && (
+
         <div className="marketSource">
-          <strong>Mercado físico ES</strong>
+
+          <strong>
+            Mercado físico ES
+          </strong>
 
           <span>
             {market.source}
-            {market.quoteDate ? ` • cotação ${market.quoteDate}` : ''}
+            {market.quoteDate
+              ? ` • cotação ${market.quoteDate}`
+              : ''}
           </span>
+
         </div>
+
       )}
 
       <section className="prices">
+
         {(market.items || []).map((item) => (
-          <article className="priceCard" key={item.id}>
+
+          <article
+            className="priceCard"
+            key={item.id}
+          >
+
             <span>
-              {item.id === 'boi' ? '🐂' : '☕'} {item.label}
+              {item.id === 'boi' ? '🐂' : '☕'}{' '}
+              {item.label}
             </span>
 
-            <strong>{money(item.value)}</strong>
+            <strong>
+              {money(item.value)}
+            </strong>
 
             <small>
               {item.unit} • {item.source}
-              {item.changePct == null ? '' : ` • ${item.changePct}%`}
+              {item.changePct == null
+                ? ''
+                : ` • ${item.changePct}%`}
             </small>
+
           </article>
+
         ))}
+
       </section>
 
       <div className="ticker">
-        <div>{ticker || 'Carregando dados...'}</div>
+
+        <div>
+          {ticker || 'Carregando dados...'}
+        </div>
+
       </div>
 
       <section>
+
         <div className="sectionTitle">
+
           <div>
-            <h2>🌦️ Clima no Espírito Santo</h2>
-            <p>Atualização automática das cidades selecionadas.</p>
+
+            <h2>
+              🌦️ Clima no Espírito Santo
+            </h2>
+
+            <p>
+              Atualização automática das cidades selecionadas.
+            </p>
+
           </div>
+
         </div>
 
         <div className="weatherGrid">
+
           {(weather.cities || []).map((city) => (
-            <article className="weatherCard" key={city.name}>
+
+            <article
+              className="weatherCard"
+              key={city.name}
+            >
+
               <div>
-                <strong>{city.name}</strong>
-                <span>{weatherEmoji(city.weatherCode)}</span>
+
+                <strong>
+                  {city.name}
+                </strong>
+
+                <span>
+                  {weatherEmoji(city.weatherCode)}
+                </span>
+
               </div>
 
-              <h3>{city.temperature ?? '--'}°C</h3>
+              <h3>
+                {city.temperature ?? '--'}°C
+              </h3>
 
               <small>
                 Umidade: {city.humidity ?? '--'}%
               </small>
+
             </article>
+
           ))}
+
         </div>
+
       </section>
 
       <section className="radarSection">
+
         <div className="sectionTitle">
+
           <div>
-            <h2>📡 Radar Agro</h2>
-            <p>Informações para apoiar decisões no campo.</p>
+
+            <h2>
+              📡 Radar Agro
+            </h2>
+
+            <p>
+              Informações para apoiar decisões no campo.
+            </p>
+
           </div>
 
-          <button onClick={runRadar} disabled={loadingRadar}>
-            {loadingRadar ? 'Analisando...' : 'Atualizar radar'}
+          <button
+            onClick={runRadar}
+            disabled={loadingRadar}
+          >
+            {loadingRadar
+              ? 'Analisando...'
+              : 'Atualizar radar'}
           </button>
+
         </div>
 
         {radar && (
+
           <div className="radarResult">
-            <pre>{JSON.stringify(radar, null, 2)}</pre>
+
+            <pre>
+              {JSON.stringify(radar, null, 2)}
+            </pre>
+
           </div>
+
         )}
+
       </section>
 
       <footer>
-        <strong>Painel Agro ES</strong>
-        <span>Mercado • Clima • Inteligência</span>
+
+        <strong>
+          Painel Agro ES
+        </strong>
+
+        <span>
+          Mercado • Clima • Inteligência
+        </span>
+
       </footer>
+
     </main>
   );
 }
