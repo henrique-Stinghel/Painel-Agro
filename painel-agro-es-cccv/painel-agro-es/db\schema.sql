@@ -1,0 +1,13 @@
+CREATE TABLE IF NOT EXISTS ads (
+  id UUID PRIMARY KEY,
+  company_name TEXT NOT NULL,
+  call_to_action TEXT NOT NULL,
+  image_url TEXT NOT NULL,
+  target_url TEXT NOT NULL,
+  position TEXT NOT NULL,
+  starts_at TIMESTAMPTZ,
+  ends_at TIMESTAMPTZ,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
