@@ -1,36 +1,36 @@
 # Painel Agro ES
 
-Starter funcional em Next.js para:
+Portal em Next.js com cotações físicas da CCCV e Incaper, clima do Espírito Santo, Radar IA e gerenciamento dinâmico de anúncios.
 
-- banner publicitário premium;
-- Arábica, Conilon e boi gordo via adaptador de mercado;
-- clima do ES via Open-Meteo;
-- Radar IA via OpenAI Responses API;
-- layout responsivo e ticker.
+## Painel administrativo
 
-## Rodar localmente
+O endereço `/admin` permite cadastrar, editar, ativar, desativar e excluir anúncios. Cada anúncio contém empresa, chamada, imagem, WhatsApp ou URL, posição e período de exibição.
+
+As imagens são armazenadas no Vercel Blob e os registros em Postgres compatível com Neon. Se o banco ainda não estiver configurado ou estiver temporariamente indisponível, o banner original da Tesla continua aparecendo automaticamente.
+
+## Configuração na Vercel
+
+Crie/conecte um banco Neon Postgres e um Vercel Blob público ao projeto. Depois cadastre estas variáveis de ambiente em Production e Preview:
+
+- `DATABASE_URL`, `STORAGE_URL` ou `POSTGRES_URL`: conexão fornecida pelo Neon;
+- `ADS_BLOB_READ_WRITE_TOKEN`: token da conexão Vercel Blob usada pelos anúncios;
+- `ADMIN_PASSWORD`: senha exclusiva do painel;
+- `ADMIN_SESSION_SECRET`: texto aleatório longo, com no mínimo 32 caracteres;
+- `OPENAI_API_KEY`: mantém o Radar IA existente;
+- `OPENAI_MODEL`: opcional;
+- `OPEN_METEO_API_KEY`: opcional, conforme o plano utilizado.
+
+O banco cria a tabela `ads` automaticamente no primeiro acesso. O mesmo esquema está documentado em `db/schema.sql`.
+
+## Desenvolvimento
 
 ```bash
-cp .env.example .env.local
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
-Abra http://localhost:3000.
+Copie `.env.example` para `.env.local` e preencha apenas localmente. Nunca envie segredos ao repositório ou ao frontend.
 
-## IA
+## Preparação para B3
 
-Coloque `OPENAI_API_KEY` apenas em `.env.local` ou no painel de variáveis do provedor de hospedagem. Nunca exponha a chave no frontend.
-
-## Clima
-
-O projeto usa o endpoint público do Open-Meteo apenas como base de protótipo. Para um portal monetizado/comercial, configure o endpoint e a chave do plano/licença comercial.
-
-## Cotações
-
-`lib/market.js` é propositalmente um adaptador vazio. Conecte ali um provedor/licença que autorize exibição/redistribuição pública dos preços de Arábica, Conilon e boi gordo.
-
-
-## Integração CCCV
-
-Esta versão consulta no servidor a página oficial de cotações da CCCV e exibe Arábica Dura, Arábica Rio e Conilon 7/8, com atribuição da fonte. O endpoint é `/api/market`.
+`lib/b3.js` contém o contrato para uma fonte futura licenciada de cotações B3. A interface pública já aceita `changePct` e mostra alta em verde, baixa em vermelho e estabilidade em cinza, sem substituir as fontes físicas existentes.

@@ -2,7 +2,7 @@ import './styles.css';
 
 export const metadata = {
   title: 'Painel Agro ES',
-  description: 'Cotações, clima do Espírito Santo e Radar IA para o agro.'
+  description: 'Cotações, clima do Espírito Santo e inteligência para o agro.'
 };
 
 export default function RootLayout({ children }) {
