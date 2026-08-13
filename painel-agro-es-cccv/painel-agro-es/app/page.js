@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 
 const money = (value) => value == null ? 'Aguardando fonte' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-const numberBr = (value) => value == null ? '--' : new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 }).format(value);\nconst newsDate = (value) => value ? new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short' }).format(new Date(value)) : '';
+const numberBr = (value) => value == null ? '--' : new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 }).format(value);
+const newsDate = (value) => value ? new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short' }).format(new Date(value)) : '';
 function weatherEmoji(code) { if (code == null) return '🌤️'; if ([0, 1].includes(code)) return '☀️'; if ([2, 3].includes(code)) return '🌤️'; if ([45, 48].includes(code)) return '🌫️'; if (code >= 51 && code <= 67) return '🌧️'; if (code >= 80 && code <= 82) return '🌦️'; if (code >= 95) return '⛈️'; return '🌤️'; }
 
 function AdSlot({ ads, position }) {
@@ -45,7 +46,8 @@ function NewsColumn({ title, icon, items }) {
 export default function Home() {
   const [weather, setWeather] = useState({ cities: [] });
   const [market, setMarket] = useState({ items: [] });
-  const [ads, setAds] = useState([]);\n  const [news, setNews] = useState([]);
+  const [ads, setAds] = useState([]);
+  const [news, setNews] = useState([]);
   const [radar, setRadar] = useState(null);
   const [loadingRadar, setLoadingRadar] = useState(false);
 
