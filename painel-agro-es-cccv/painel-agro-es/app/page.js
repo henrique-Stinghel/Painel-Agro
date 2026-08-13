@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import Script from 'next/script';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 const money = (value) => value == null ? 'Aguardando fonte' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 const numberBr = (value) => value == null ? '--' : new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 }).format(value);
@@ -41,15 +40,28 @@ function ChangeBadge({ value }) {
 }
 
 function B3CoffeeQuote() {
+  const widgetRef = useRef(null);
+
+  useEffect(() => {
+    const container = widgetRef.current;
+    if (!container) return;
+    container.replaceChildren();
+    const widget = document.createElement('div');
+    widget.className = 'tradingview-widget-container__widget';
+    const script = document.createElement('script');
+    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-symbol-info.js';
+    script.async = true;
+    script.textContent = JSON.stringify({ symbol: 'BMFBOVESPA:ICF1!', width: '100%', locale: 'br', colorTheme: 'light', isTransparent: true });
+    container.append(widget, script);
+    return () => container.replaceChildren();
+  }, []);
+
   return <section className="b3Market" aria-labelledby="b3-coffee-title">
     <div className="b3MarketHead">
       <div><small>MERCADO FUTURO</small><h2 id="b3-coffee-title">CafÃ© ArÃ¡bica na B3</h2></div>
       <span>B3 â€¢ atraso de 15 min</span>
     </div>
-    <div className="b3Widget">
-      <Script type="module" src="https://widgets.tradingview-widget.com/w/en/tv-single-ticker.js" strategy="afterInteractive" />
-      <tv-single-ticker symbol="BMFBOVESPA:ICF1!" locale="br" theme="light" width="100%"></tv-single-ticker>
-    </div>
+    <div className="b3Widget tradingview-widget-container" ref={widgetRef}><span>Carregando cotaÃ§Ã£o B3...</span></div>
     <p>Contrato contÃ­nuo ICF â€¢ preÃ§o futuro em dÃ³lar por saca de 60 kg. Acompanhe a direÃ§Ã£o do mercado sem substituir a cotaÃ§Ã£o fÃ­sica do EspÃ­rito Santo.</p>
   </section>;
 }
