@@ -7,9 +7,29 @@ const numberBr = (value) => value == null ? '--' : new Intl.NumberFormat('pt-BR'
 function weatherEmoji(code) { if (code == null) return '🌤️'; if ([0, 1].includes(code)) return '☀️'; if ([2, 3].includes(code)) return '🌤️'; if ([45, 48].includes(code)) return '🌫️'; if (code >= 51 && code <= 67) return '🌧️'; if (code >= 80 && code <= 82) return '🌦️'; if (code >= 95) return '⛈️'; return '🌤️'; }
 
 function AdSlot({ ads, position }) {
-  const items = ads.filter((ad) => ad.position === position);
+  const items = useMemo(() => ads.filter((ad) => ad.position === position), [ads, position]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    setCurrentIndex(0);
+    if (items.length <= 1) return undefined;
+    const rotation = window.setInterval(() => {
+      setCurrentIndex((index) => (index + 1) % items.length);
+    }, 8000);
+    return () => window.clearInterval(rotation);
+  }, [items]);
+
   if (!items.length) return null;
-  return <section className={`adSlot adSlot-${position}`} aria-label="Publicidade">{items.map((ad) => <a href={ad.target_url} target="_blank" rel="noopener noreferrer sponsored" key={ad.id} aria-label={`${ad.company_name}: ${ad.call_to_action}`}><img src={ad.image_url} alt={`${ad.company_name} - ${ad.call_to_action}`} /><span><strong>{ad.company_name}</strong>{ad.call_to_action}</span></a>)}</section>;
+  const ad = items[currentIndex] || items[0];
+  return <section className={`adSlot adSlot-${position}`} aria-label="Publicidade" aria-live="polite">
+    <a className="rotatingAd" href={ad.target_url} target="_blank" rel="noopener noreferrer sponsored" key={ad.id} aria-label={`${ad.company_name}: ${ad.call_to_action}`}>
+      <img src={ad.image_url} alt={`${ad.company_name} - ${ad.call_to_action}`} />
+      <span><strong>{ad.company_name}</strong>{ad.call_to_action}</span>
+    </a>
+    {items.length > 1 && <div className="adDots" aria-label={`Anúncio ${currentIndex + 1} de ${items.length}`}>
+      {items.map((item, index) => <i className={index === currentIndex ? 'active' : ''} key={item.id} />)}
+    </div>}
+  </section>;
 }
 
 function ChangeBadge({ value }) {
