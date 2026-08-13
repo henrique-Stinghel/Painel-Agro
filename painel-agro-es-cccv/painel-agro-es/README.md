@@ -10,10 +10,10 @@ As imagens são armazenadas no Vercel Blob e os registros em Postgres compatíve
 
 ## Configuração na Vercel
 
-Crie/conecte um banco Neon Postgres e um Vercel Blob ao projeto. Depois cadastre estas variáveis de ambiente em Production, Preview e Development:
+Crie/conecte um banco Neon Postgres e um Vercel Blob público ao projeto. Depois cadastre estas variáveis de ambiente em Production e Preview:
 
-- `DATABASE_URL`: conexão do Neon;
-- `BLOB_READ_WRITE_TOKEN`: token criado pela integração Vercel Blob;
+- `DATABASE_URL`, `STORAGE_URL` ou `POSTGRES_URL`: conexão fornecida pelo Neon;
+- `ADS_BLOB_READ_WRITE_TOKEN`: token da conexão Vercel Blob usada pelos anúncios;
 - `ADMIN_PASSWORD`: senha exclusiva do painel;
 - `ADMIN_SESSION_SECRET`: texto aleatório longo, com no mínimo 32 caracteres;
 - `OPENAI_API_KEY`: mantém o Radar IA existente;
