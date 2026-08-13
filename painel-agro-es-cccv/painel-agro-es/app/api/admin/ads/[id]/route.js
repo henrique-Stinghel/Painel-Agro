@@ -29,8 +29,9 @@ export async function DELETE(_request, { params }) {
     const sql = await ensureAdsTable();
     const rows = await sql`DELETE FROM ads WHERE id=${id} RETURNING image_url`;
     if (!rows[0]) return Response.json({ error: 'Anúncio não encontrado.' }, { status: 404 });
-    if (process.env.BLOB_READ_WRITE_TOKEN && rows[0].image_url?.includes('.public.blob.vercel-storage.com')) {
-      await del(rows[0].image_url).catch(() => null);
+    const blobToken = process.env.ADS_BLOB_READ_WRITE_TOKEN;
+    if (blobToken && rows[0].image_url?.includes('.public.blob.vercel-storage.com')) {
+      await del(rows[0].image_url, { token: blobToken }).catch(() => null);
     }
     return Response.json({ ok: true });
   } catch (dbError) { return Response.json({ error: dbError.message }, { status: 503 }); }
