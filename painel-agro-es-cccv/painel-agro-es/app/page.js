@@ -16,7 +16,7 @@ function AdSlot({ ads, position }) {
     if (items.length <= 1) return undefined;
     const rotation = window.setInterval(() => {
       setCurrentIndex((index) => (index + 1) % items.length);
-    }, 8000);
+    }, 5000);
     return () => window.clearInterval(rotation);
   }, [items]);
 
