@@ -39,7 +39,7 @@ function ChangeBadge({ value }) {
   return <span className={`changeBadge ${state}`}>{value > 0 ? '↑' : value < 0 ? '↓' : '•'} {value > 0 ? '+' : ''}{numberBr(value)}%</span>;
 }
 
-function B3CoffeeQuote() {
+function MarketWidget({ title, subtitle, symbol, note }) {
   const widgetRef = useRef(null);
 
   useEffect(() => {
@@ -49,23 +49,57 @@ function B3CoffeeQuote() {
     const widget = document.createElement('div');
     widget.className = 'tradingview-widget-container__widget';
     const script = document.createElement('script');
-    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-symbol-info.js';
+    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js';
     script.async = true;
-    script.textContent = JSON.stringify({ symbol: 'BMFBOVESPA:ICF1!', width: '100%', locale: 'br', colorTheme: 'light', isTransparent: true });
+    script.textContent = JSON.stringify({
+      symbols: [[title, symbol + '|1D']],
+      chartOnly: false,
+      width: '100%',
+      height: '220',
+      locale: 'br',
+      colorTheme: 'light',
+      autosize: false,
+      showVolume: false,
+      showMA: false,
+      hideDateRanges: true,
+      hideMarketStatus: false,
+      hideSymbolLogo: false,
+      scalePosition: 'right',
+      scaleMode: 'Normal',
+      fontFamily: 'Arial, sans-serif',
+      fontSize: '11',
+      noTimeScale: false,
+      valuesTracking: '1',
+      changeMode: 'price-and-percent',
+      chartType: 'area',
+      lineWidth: 2,
+      lineType: 0,
+      dateRanges: ['1d|1']
+    });
     container.append(widget, script);
     return () => container.replaceChildren();
-  }, []);
+  }, [symbol, title]);
 
-  return <section className="b3Market" aria-labelledby="b3-coffee-title">
-    <div className="b3MarketHead">
-      <div><small>MERCADO FUTURO</small><h2 id="b3-coffee-title">Café Arábica na B3</h2></div>
-      <span>B3 • atraso de 15 min</span>
-    </div>
-    <div className="b3Widget tradingview-widget-container" ref={widgetRef}><span>Carregando cotação B3...</span></div>
-    <p>Contrato contínuo ICF • preço futuro em dólar por saca de 60 kg. Acompanhe a direção do mercado sem substituir a cotação física do Espírito Santo.</p>
-  </section>;
+  return <article className="b3QuoteCard">
+    <div className="b3QuoteTitle"><strong>{title}</strong><span>{subtitle}</span></div>
+    <div className="b3Widget tradingview-widget-container" ref={widgetRef}><span>Carregando cotação...</span></div>
+    <small>{note}</small>
+  </article>;
 }
 
+function B3CoffeeQuote() {
+  return <section className="b3Market" aria-labelledby="b3-coffee-title">
+    <div className="b3MarketHead">
+      <div><small>MERCADO FUTURO</small><h2 id="b3-coffee-title">Café na B3 em reais</h2></div>
+      <span>B3 • atraso de 15 min</span>
+    </div>
+    <div className="b3QuoteGrid">
+      <MarketWidget title="Conilon B3" subtitle="Cotação oficial em R$/saca" symbol="BMFBOVESPA:CNL1!" note="Contrato contínuo CNL • reais por saca de 60 kg." />
+      <MarketWidget title="Arábica B3 em R$" subtitle="Conversão estimada" symbol="BMFBOVESPA:ICF1!*FX_IDC:USDBRL" note="ICF em dólar convertido pelo USD/BRL do mercado. Valor indicativo." />
+    </div>
+    <p>Os contratos futuros mostram a direção da bolsa e não substituem as cotações físicas da CCCV e do Incaper.</p>
+  </section>;
+}
 function NewsColumn({ title, icon, items }) {
   return <section className="newsColumn"><h3>{icon} {title}</h3>{items.length ? items.map((item) => <a className="newsCard" href={item.url} target="_blank" rel="noopener noreferrer" key={item.id}><span>{item.source}{item.publishedAt ? ` • ${newsDate(item.publishedAt)}` : ''}</span><strong>{item.title}</strong><small>Ler notícia →</small></a>) : <p className="newsEmpty">Buscando as notícias mais recentes...</p>}</section>;
 }
